@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シラバス設計支援ツール / Syllabus Design Tool</title>
+<style>
+:root {
+  color-scheme: light;
+  --primary: #1a56db;
+  --primary-light: #e8f0fe;
+  --secondary: #7c3aed;
+  --secondary-light: #f3e8ff;
+  --accent: #059669;
+  --accent-light: #d1fae5;
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+/* Header */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+.header h1 { font-size: 1.1rem; color: var(--primary); }
+.lang-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  padding: 3px;
+  border-radius: 6px;
+}
+.lang-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.lang-btn.active { background: var(--primary); color: white; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  padding: 8px 16px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 10px 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--primary); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Panels */
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.card h2 { font-size: 1rem; margin-bottom: 12px; color: var(--primary); }
+.card h3 { font-size: 0.9rem; margin-bottom: 8px; color: var(--text); }
+
+/* Form elements */
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+input, select, textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+textarea { resize: vertical; min-height: 80px; }
+.form-group { margin-bottom: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+/* Buttons */
+.btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #1545b0; }
+.btn-secondary { background: var(--secondary); color: white; }
+.btn-secondary:hover { background: #6425d0; }
+.btn-accent { background: var(--accent); color: white; }
+.btn-accent:hover { background: #047857; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { background: var(--bg); }
+.btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+
+/* Taxonomy Grid */
+.taxonomy-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin: 12px 0;
+}
+.taxonomy-cell {
+  padding: 10px 6px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+}
+.taxonomy-cell:hover { transform: scale(1.05); box-shadow: var(--shadow-lg); }
+.taxonomy-cell.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+
+.bloom-1 { background: #fef2f2; color: #991b1b; }
+.bloom-2 { background: #fff7ed; color: #9a3412; }
+.bloom-3 { background: #fefce8; color: #854d0e; }
+.bloom-4 { background: #f0fdf4; color: #166534; }
+.bloom-5 { background: #eff6ff; color: #1e40af; }
+.bloom-6 { background: #faf5ff; color: #6b21a8; }
+
+/* Fink Taxonomy */
+.fink-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+.fink-cell {
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+.fink-cell:hover { transform: scale(1.02); }
+.fink-cell.selected { border-color: var(--secondary); box-shadow: 0 0 0 2px var(--secondary-light); }
+.fink-1 { background: #fef2f2; color: #991b1b; }
+.fink-2 { background: #eff6ff; color: #1e40af; }
+.fink-3 { background: #f0fdf4; color: #166534; }
+.fink-4 { background: #fefce8; color: #854d0e; }
+.fink-5 { background: #faf5ff; color: #6b21a8; }
+.fink-6 { background: #fff7ed; color: #9a3412; }
+
+/* Output area */
+.output-area {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 12px;
+  min-height: 60px;
+}
+.objective-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.objective-text { flex: 1; font-size: 0.9rem; }
+.objective-tag {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* Matrix Table */
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 12px;
+}
+.matrix-table th, .matrix-table td {
+  border: 1px solid var(--border);
+  padding: 8px;
+  text-align: center;
+}
+.matrix-table th { background: var(--primary-light); font-weight: 600; }
+.matrix-table td { background: var(--surface); }
+.matrix-check { color: var(--accent); font-weight: bold; font-size: 1.1rem; }
+
+/* Syllabus Week Plan */
+.week-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.week-row:last-child { border-bottom: none; }
+.week-num {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--primary);
+  text-align: center;
+}
+.week-row input, .week-row select {
+  padding: 6px 8px;
+  font-size: 0.8rem;
+}
+
+/* Rubric */
+.rubric-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.rubric-table th, .rubric-table td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+.rubric-table th { background: var(--secondary-light); color: var(--secondary); }
+.rubric-level-4 { background: #d1fae5; }
+.rubric-level-3 { background: #e8f0fe; }
+.rubric-level-2 { background: #fef3c7; }
+.rubric-level-1 { background: #fef2f2; }
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+}
+.tooltip .tooltip-text {
+  visibility: hidden;
+  background: var(--text);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 4px;
+}
+.tooltip:hover .tooltip-text { visibility: visible; }
+
+/* Export */
+.export-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Info box */
+.info-box {
+  background: var(--primary-light);
+  border-left: 3px solid var(--primary);
+  padding: 12px 16px;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="app-title">シラバス設計支援ツール</h1>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('ja')">日本語</button>
+    <button class="lang-btn" onclick="setLang('en')">English</button>
+  </div>
+</div>
+
+<div class="tabs" id="main-tabs">
+  <button class="tab-btn active" data-tab="objectives" data-ja="学習目標" data-en="Objectives">学習目標</button>
+  <button class="tab-btn" data-tab="syllabus" data-ja="シラバス構成" data-en="Syllabus">シラバス構成</button>
+  <button class="tab-btn" data-tab="assessment" data-ja="評価・ルーブリック" data-en="Assessment">評価・ルーブリック</button>
+  <button class="tab-btn" data-tab="alignment" data-ja="整合性マトリクス" data-en="Alignment">整合性マトリクス</button>
+</div>
+
+<div class="container">
+
+<!-- ===== TAB 1: Learning Objectives ===== -->
+<div class="tab-panel active" id="panel-objectives">
+  <div class="card">
+    <h2 id="obj-title">学習目標ジェネレーター</h2>
+    <div class="info-box" id="obj-info">
+      改訂版ブルーム・タキソノミーの認知プロセス次元とFinkのSignificant Learningタキソノミーを組み合わせて、効果的な学習目標を生成します。
+    </div>
+
+    <div class="form-group">
+      <label id="lbl-subject">科目名 / Subject</label>
+      <input type="text" id="course-subject" placeholder="例：教育心理学 / e.g., Educational Psychology">
+    </div>
+
+    <div class="form-group">
+      <label id="lbl-topic">トピック / Topic</label>
+      <input type="text" id="course-topic" placeholder="例：動機づけ理論 / e.g., Motivation Theory">
+    </div>
+
+    <h3 id="lbl-bloom" style="margin-top:16px;">改訂版ブルーム・タキソノミー — 認知プロセス次元を選択</h3>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;" id="bloom-desc">低次から高次の思考スキルへ（複数選択可）</p>
+    <div class="taxonomy-grid" id="bloom-grid"></div>
+
+    <h3 id="lbl-fink" style="margin-top:20px;">Fink's Significant Learning タキソノミー（任意選択）</h3>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;" id="fink-desc">学習の多次元性を取り込む（複数選択可）</p>
+    <div class="fink-grid" id="fink-grid"></div>
+
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="generateObjectives()" id="btn-generate">目標を生成</button>
+      <button class="btn btn-outline" onclick="clearObjectives()" id="btn-clear">クリア</button>
+    </div>
+  </div>
+
+  <div class="card" id="objectives-output-card" style="display:none;">
+    <h2 id="obj-result-title">生成された学習目標</h2>
+    <div id="objectives-output"></div>
+    <div class="export-bar">
+      <button class="btn btn-sm btn-outline" onclick="copyObjectives()" id="btn-copy-obj">コピー</button>
+      <button class="btn btn-sm btn-accent" onclick="addToAlignment()" id="btn-add-align">整合性マトリクスに追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: Syllabus Structure ===== -->
+<div class="tab-panel" id="panel-syllabus">
+  <div class="card">
+    <h2 id="syl-title">シラバス構成ビルダー</h2>
+    <div class="info-box" id="syl-info">
+      15回の授業計画を構成し、学習目標との対応を確認します。各週にトピック、活動、評価方法を設定できます。
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label id="lbl-weeks">授業回数</label>
+        <select id="num-weeks" onchange="buildWeekPlan()">
+          <option value="8">8回</option>
+          <option value="10">10回</option>
+          <option value="15" selected>15回</option>
+          <option value="16">16回</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label id="lbl-course-name">コース名</label>
+        <input type="text" id="syl-course-name" placeholder="コース名を入力">
+      </div>
+    </div>
+    <div id="week-plan-container"></div>
+    <div class="export-bar">
+      <button class="btn btn-primary" onclick="exportSyllabus()" id="btn-export-syl">シラバスをエクスポート</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: Assessment & Rubric ===== -->
+<div class="tab-panel" id="panel-assessment">
+  <div class="card">
+    <h2 id="assess-title">評価方法・ルーブリック生成</h2>
+    <div class="info-box" id="assess-info">
+      学習目標に対応した評価方法を選択し、ルーブリックを自動生成します。整合的な評価計画の作成を支援します。
+    </div>
+
+    <div class="form-group">
+      <label id="lbl-assess-obj">評価対象の学習目標</label>
+      <textarea id="assess-objective" placeholder="学習目標を入力（例：学生は動機づけ理論の主要概念を分析し、教育実践への応用を提案できる）"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label id="lbl-assess-method">評価方法</label>
+        <select id="assess-method">
+          <option value="report" data-ja="レポート" data-en="Report">レポート</option>
+          <option value="presentation" data-ja="プレゼンテーション" data-en="Presentation">プレゼンテーション</option>
+          <option value="exam" data-ja="試験" data-en="Exam">試験</option>
+          <option value="portfolio" data-ja="ポートフォリオ" data-en="Portfolio">ポートフォリオ</option>
+          <option value="project" data-ja="プロジェクト" data-en="Project">プロジェクト</option>
+          <option value="discussion" data-ja="ディスカッション" data-en="Discussion">ディスカッション</option>
+          <option value="peer" data-ja="ピア評価" data-en="Peer Review">ピア評価</option>
+          <option value="reflection" data-ja="振り返り" data-en="Reflection">振り返り</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label id="lbl-bloom-level">ブルームレベル</label>
+        <select id="assess-bloom">
+          <option value="remember" data-ja="記憶" data-en="Remember">記憶</option>
+          <option value="understand" data-ja="理解" data-en="Understand">理解</option>
+          <option value="apply" data-ja="応用" data-en="Apply">応用</option>
+          <option value="analyze" data-ja="分析" data-en="Analyze">分析</option>
+          <option value="evaluate" data-ja="評価" data-en="Evaluate">評価</option>
+          <option value="create" data-ja="創造" data-en="Create">創造</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="generateRubric()" id="btn-gen-rubric">ルーブリックを生成</button>
+  </div>
+
+  <div class="card" id="rubric-output-card" style="display:none;">
+    <h2 id="rubric-result-title">生成されたルーブリック</h2>
+    <div id="rubric-output"></div>
+    <div class="export-bar">
+      <button class="btn btn-sm btn-outline" onclick="copyRubric()" id="btn-copy-rubric">コピー</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: Alignment Matrix ===== -->
+<div class="tab-panel" id="panel-alignment">
+  <div class="card">
+    <h2 id="align-title">整合性マトリクス（Alignment Matrix）</h2>
+    <div class="info-box" id="align-info">
+      学習目標・教授活動・評価方法の整合性を可視化します。Biggs (2003) のConstructive Alignmentに基づき、3要素の一貫性を確認できます。
+    </div>
+
+    <div class="form-group">
+      <label id="lbl-add-obj">学習目標を追加</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="align-new-obj" placeholder="学習目標を入力" style="flex:1;">
+        <button class="btn btn-sm btn-primary" onclick="addAlignmentRow()">+</button>
+      </div>
+    </div>
+
+    <div id="alignment-matrix-container">
+      <table class="matrix-table" id="alignment-table">
+        <thead>
+          <tr>
+            <th id="th-obj">学習目標</th>
+            <th id="th-bloom">Bloom</th>
+            <th id="th-fink">Fink</th>
+            <th id="th-activity">教授活動</th>
+            <th id="th-assess">評価方法</th>
+            <th id="th-action">操作</th>
+          </tr>
+        </thead>
+        <tbody id="alignment-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="export-bar">
+      <button class="btn btn-primary" onclick="exportAlignment()" id="btn-export-align">マトリクスをエクスポート</button>
+      <button class="btn btn-outline" onclick="checkAlignment()" id="btn-check-align">整合性チェック</button>
+    </div>
+    <div id="alignment-feedback" class="output-area" style="display:none;margin-top:12px;"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== DATA =====
+let currentLang = 'ja';
+let selectedBlooms = [];
+let selectedFinks = [];
+let generatedObjectives = [];
+let alignmentRows = [];
+
+const i18n = {
+  ja: {
+    title: 'シラバス設計支援ツール',
+    objTitle: '学習目標ジェネレーター',
+    objInfo: '改訂版ブルーム・タキソノミーの認知プロセス次元とFinkのSignificant Learningタキソノミーを組み合わせて、効果的な学習目標を生成します。',
+    lblSubject: '科目名',
+    lblTopic: 'トピック',
+    lblBloom: '改訂版ブルーム・タキソノミー — 認知プロセス次元を選択',
+    bloomDesc: '低次から高次の思考スキルへ（複数選択可）',
+    lblFink: 'Fink\'s Significant Learning タキソノミー（任意選択）',
+    finkDesc: '学習の多次元性を取り込む（複数選択可）',
+    btnGenerate: '目標を生成',
+    btnClear: 'クリア',
+    objResultTitle: '生成された学習目標',
+    btnCopyObj: 'コピー',
+    btnAddAlign: '整合性マトリクスに追加',
+    sylTitle: 'シラバス構成ビルダー',
+    sylInfo: '授業計画を構成し、学習目標との対応を確認します。各週にトピック、活動、評価方法を設定できます。',
+    lblWeeks: '授業回数',
+    lblCourseName: 'コース名',
+    btnExportSyl: 'シラバスをエクスポート',
+    assessTitle: '評価方法・ルーブリック生成',
+    assessInfo: '学習目標に対応した評価方法を選択し、ルーブリックを自動生成します。',
+    lblAssessObj: '評価対象の学習目標',
+    lblAssessMethod: '評価方法',
+    lblBloomLevel: 'ブルームレベル',
+    btnGenRubric: 'ルーブリックを生成',
+    rubricResultTitle: '生成されたルーブリック',
+    btnCopyRubric: 'コピー',
+    alignTitle: '整合性マトリクス（Alignment Matrix）',
+    alignInfo: '学習目標・教授活動・評価方法の整合性を可視化します。Biggs (2003) のConstructive Alignmentに基づき、3要素の一貫性を確認できます。',
+    lblAddObj: '学習目標を追加',
+    thObj: '学習目標', thBloom: 'Bloom', thFink: 'Fink', thActivity: '教授活動', thAssess: '評価方法', thAction: '操作',
+    btnExportAlign: 'マトリクスをエクスポート',
+    btnCheckAlign: '整合性チェック',
+    weekTopic: 'トピック', weekActivity: '活動', weekAssess: '評価',
+    phSubject: '例：教育心理学',
+    phTopic: '例：動機づけ理論',
+    phAssessObj: '学習目標を入力',
+    phAlignObj: '学習目標を入力',
+    phCourseName: 'コース名を入力',
+    rubricCriteria: '評価基準', rubricExcellent: '秀（4）', rubricGood: '優（3）', rubricAdequate: '良（2）', rubricDeveloping: '可（1）',
+    copied: 'コピーしました！',
+    alignOk: '✓ 整合性は概ね確保されています。',
+    alignWarn: '⚠ 一部の学習目標に対応する評価方法が未設定です。'
+  },
+  en: {
+    title: 'Syllabus Design Tool',
+    objTitle: 'Learning Objectives Generator',
+    objInfo: 'Generate effective learning objectives by combining the cognitive process dimension of Revised Bloom\'s Taxonomy with Fink\'s Significant Learning Taxonomy.',
+    lblSubject: 'Subject',
+    lblTopic: 'Topic',
+    lblBloom: 'Revised Bloom\'s Taxonomy — Select Cognitive Process Level',
+    bloomDesc: 'From lower-order to higher-order thinking skills (multiple selection)',
+    lblFink: 'Fink\'s Significant Learning Taxonomy (optional)',
+    finkDesc: 'Incorporate multidimensional aspects of learning (multiple selection)',
+    btnGenerate: 'Generate Objectives',
+    btnClear: 'Clear',
+    objResultTitle: 'Generated Learning Objectives',
+    btnCopyObj: 'Copy',
+    btnAddAlign: 'Add to Alignment Matrix',
+    sylTitle: 'Syllabus Structure Builder',
+    sylInfo: 'Build your course plan and check alignment with learning objectives. Set topics, activities, and assessments for each week.',
+    lblWeeks: 'Number of Sessions',
+    lblCourseName: 'Course Name',
+    btnExportSyl: 'Export Syllabus',
+    assessTitle: 'Assessment & Rubric Generator',
+    assessInfo: 'Select assessment methods aligned with learning objectives and auto-generate rubrics.',
+    lblAssessObj: 'Learning Objective to Assess',
+    lblAssessMethod: 'Assessment Method',
+    lblBloomLevel: 'Bloom\'s Level',
+    btnGenRubric: 'Generate Rubric',
+    rubricResultTitle: 'Generated Rubric',
+    btnCopyRubric: 'Copy',
+    alignTitle: 'Alignment Matrix',
+    alignInfo: 'Visualize alignment between learning objectives, teaching activities, and assessment methods based on Biggs (2003) Constructive Alignment.',
+    lblAddObj: 'Add Learning Objective',
+    thObj: 'Learning Objective', thBloom: 'Bloom', thFink: 'Fink', thActivity: 'Teaching Activity', thAssess: 'Assessment', thAction: 'Action',
+    btnExportAlign: 'Export Matrix',
+    btnCheckAlign: 'Check Alignment',
+    weekTopic: 'Topic', weekActivity: 'Activity', weekAssess: 'Assessment',
+    phSubject: 'e.g., Educational Psychology',
+    phTopic: 'e.g., Motivation Theory',
+    phAssessObj: 'Enter learning objective',
+    phAlignObj: 'Enter learning objective',
+    phCourseName: 'Enter course name',
+    rubricCriteria: 'Criteria', rubricExcellent: 'Excellent (4)', rubricGood: 'Good (3)', rubricAdequate: 'Adequate (2)', rubricDeveloping: 'Developing (1)',
+    copied: 'Copied!',
+    alignOk: '✓ Alignment is generally maintained.',
+    alignWarn: '⚠ Some learning objectives lack corresponding assessment methods.'
+  }
+};
+
+const bloomLevels = {
+  ja: [
+    { id: 'remember', name: '記憶', desc: '情報を再生・想起する', verbs: ['列挙する','定義する','述べる','特定する','名前を挙げる','再現する','暗唱する'] },
+    { id: 'understand', name: '理解', desc: '意味を構築し解釈する', verbs: ['説明する','分類する','要約する','比較する','解釈する','言い換える','例示する'] },
+    { id: 'apply', name: '応用', desc: '手続きを新しい状況で実行する', verbs: ['適用する','実行する','使用する','実施する','実演する','計算する','解決する'] },
+    { id: 'analyze', name: '分析', desc: '構成要素に分解し関係を明らかにする', verbs: ['分析する','区別する','組織化する','関連づける','比較対照する','検証する','構造化する'] },
+    { id: 'evaluate', name: '評価', desc: '基準に基づいて判断する', verbs: ['評価する','判断する','批評する','正当化する','推奨する','優先順位をつける','論駁する'] },
+    { id: 'create', name: '創造', desc: '要素を統合し新しいものを生み出す', verbs: ['設計する','構築する','開発する','考案する','創作する','計画する','提案する'] }
+  ],
+  en: [
+    { id: 'remember', name: 'Remember', desc: 'Retrieve relevant knowledge from memory', verbs: ['list','define','state','identify','name','reproduce','recall'] },
+    { id: 'understand', name: 'Understand', desc: 'Construct meaning from information', verbs: ['explain','classify','summarize','compare','interpret','paraphrase','exemplify'] },
+    { id: 'apply', name: 'Apply', desc: 'Carry out a procedure in a new situation', verbs: ['apply','execute','use','implement','demonstrate','calculate','solve'] },
+    { id: 'analyze', name: 'Analyze', desc: 'Break into parts and determine relationships', verbs: ['analyze','distinguish','organize','relate','compare/contrast','examine','structure'] },
+    { id: 'evaluate', name: 'Evaluate', desc: 'Make judgments based on criteria', verbs: ['evaluate','judge','critique','justify','recommend','prioritize','defend'] },
+    { id: 'create', name: 'Create', desc: 'Put elements together to form a new whole', verbs: ['design','construct','develop','devise','compose','plan','propose'] }
+  ]
+};
+
+const finkCategories = {
+  ja: [
+    { id: 'foundational', name: '基礎的知識', desc: '理解し記憶する' },
+    { id: 'application', name: '応用', desc: '技能・思考・管理' },
+    { id: 'integration', name: '統合', desc: '知識間の結びつき' },
+    { id: 'human', name: '人間の次元', desc: '自己・他者についての学び' },
+    { id: 'caring', name: '関心', desc: '新しい感情・興味・価値' },
+    { id: 'learning_how', name: '学び方の学習', desc: '自律的学習者になる' }
+  ],
+  en: [
+    { id: 'foundational', name: 'Foundational Knowledge', desc: 'Understanding and remembering' },
+    { id: 'application', name: 'Application', desc: 'Skills, thinking, managing' },
+    { id: 'integration', name: 'Integration', desc: 'Connecting ideas' },
+    { id: 'human', name: 'Human Dimension', desc: 'Learning about self & others' },
+    { id: 'caring', name: 'Caring', desc: 'New feelings, interests, values' },
+    { id: 'learning_how', name: 'Learning How to Learn', desc: 'Becoming a self-directed learner' }
+  ]
+};
+
+const rubricTemplates = {
+  ja: {
+    report: {
+      criteria: ['論理構成','分析の深さ','根拠・引用','文章表現'],
+      levels: {
+        4: ['論旨が一貫し構成が明確','多角的で深い分析','適切で十分な根拠','学術的で読みやすい'],
+        3: ['概ね論理的な構成','適切な分析','概ね適切な根拠','明瞭な文章'],
+        2: ['一部論理が不明確','表面的な分析','根拠が不十分','改善が必要'],
+        1: ['構成が不明確','分析が欠如','根拠がない','大幅な改善が必要']
+      }
+    },
+    presentation: {
+      criteria: ['内容の質','伝達力','構成','質疑応答'],
+      levels: {
+        4: ['深い理解に基づく内容','聴衆を引き込む発表','明快な構成と時間管理','的確で発展的な回答'],
+        3: ['適切な内容','分かりやすい発表','概ね良い構成','適切な回答'],
+        2: ['内容に不足あり','一方的な発表','構成に改善必要','回答が不十分'],
+        1: ['準備不足','伝わりにくい','構成が不明確','回答困難']
+      }
+    },
+    project: {
+      criteria: ['課題設定','方法論','成果物の質','省察・改善'],
+      levels: {
+        4: ['独創的で意義ある課題','適切で革新的な方法','高品質で完成度が高い','深い省察と改善提案'],
+        3: ['適切な課題設定','妥当な方法論','十分な品質','適切な省察'],
+        2: ['課題が曖昧','方法に改善必要','品質に課題あり','省察が浅い'],
+        1: ['課題が不適切','方法が不適切','未完成','省察がない']
+      }
+    }
+  },
+  en: {
+    report: {
+      criteria: ['Logical Structure','Depth of Analysis','Evidence & Citations','Writing Quality'],
+      levels: {
+        4: ['Coherent and clearly organized','Multifaceted, deep analysis','Appropriate and sufficient evidence','Academic and readable'],
+        3: ['Generally logical structure','Adequate analysis','Mostly appropriate evidence','Clear writing'],
+        2: ['Some logical gaps','Surface-level analysis','Insufficient evidence','Needs improvement'],
+        1: ['Unclear structure','Lacks analysis','No evidence','Major revision needed']
+      }
+    },
+    presentation: {
+      criteria: ['Content Quality','Delivery','Organization','Q&A'],
+      levels: {
+        4: ['Deep understanding shown','Engaging delivery','Clear structure & timing','Insightful responses'],
+        3: ['Adequate content','Clear delivery','Good organization','Appropriate responses'],
+        2: ['Content gaps','One-sided delivery','Needs better structure','Insufficient responses'],
+        1: ['Underprepared','Hard to follow','Unclear structure','Unable to respond']
+      }
+    },
+    project: {
+      criteria: ['Problem Definition','Methodology','Output Quality','Reflection'],
+      levels: {
+        4: ['Original and significant','Appropriate and innovative','High quality, complete','Deep reflection with proposals'],
+        3: ['Appropriate definition','Valid methodology','Sufficient quality','Adequate reflection'],
+        2: ['Vague definition','Methods need improvement','Quality issues','Shallow reflection'],
+        1: ['Inappropriate','Inappropriate methods','Incomplete','No reflection']
+      }
+    }
+  }
+};
+
+// Add generic templates for methods that don't have specific ones
+['exam','portfolio','discussion','peer','reflection'].forEach(method => {
+  rubricTemplates.ja[method] = rubricTemplates.ja.report;
+  rubricTemplates.en[method] = rubricTemplates.en.report;
+});
+
+// ===== INITIALIZATION =====
+function init() {
+  renderBloomGrid();
+  renderFinkGrid();
+  buildWeekPlan();
+  setupTabs();
+}
+
+function setupTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+// ===== LANGUAGE =====
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.lang-btn').forEach(b => { if(b.textContent.includes(lang==='ja'?'日':'E')) b.classList.add('active'); });
+
+  const t = i18n[lang];
+  document.getElementById('app-title').textContent = t.title;
+  document.getElementById('obj-title').textContent = t.objTitle;
+  document.getElementById('obj-info').textContent = t.objInfo;
+  document.getElementById('lbl-bloom').textContent = t.lblBloom;
+  document.getElementById('bloom-desc').textContent = t.bloomDesc;
+  document.getElementById('lbl-fink').textContent = t.lblFink;
+  document.getElementById('fink-desc').textContent = t.finkDesc;
+  document.getElementById('btn-generate').textContent = t.btnGenerate;
+  document.getElementById('btn-clear').textContent = t.btnClear;
+  document.getElementById('obj-result-title').textContent = t.objResultTitle;
+  document.getElementById('btn-copy-obj').textContent = t.btnCopyObj;
+  document.getElementById('btn-add-align').textContent = t.btnAddAlign;
+  document.getElementById('syl-title').textContent = t.sylTitle;
+  document.getElementById('syl-info').textContent = t.sylInfo;
+  document.getElementById('assess-title').textContent = t.assessTitle;
+  document.getElementById('assess-info').textContent = t.assessInfo;
+  document.getElementById('btn-gen-rubric').textContent = t.btnGenRubric;
+  document.getElementById('rubric-result-title').textContent = t.rubricResultTitle;
+  document.getElementById('btn-copy-rubric').textContent = t.btnCopyRubric;
+  document.getElementById('align-title').textContent = t.alignTitle;
+  document.getElementById('align-info').textContent = t.alignInfo;
+  document.getElementById('btn-export-align').textContent = t.btnExportAlign;
+  document.getElementById('btn-check-align').textContent = t.btnCheckAlign;
+  document.getElementById('btn-export-syl').textContent = t.btnExportSyl;
+  document.getElementById('th-obj').textContent = t.thObj;
+  document.getElementById('th-bloom').textContent = t.thBloom;
+  document.getElementById('th-fink').textContent = t.thFink;
+  document.getElementById('th-activity').textContent = t.thActivity;
+  document.getElementById('th-assess').textContent = t.thAssess;
+  document.getElementById('th-action').textContent = t.thAction;
+  document.getElementById('course-subject').placeholder = t.phSubject;
+  document.getElementById('course-topic').placeholder = t.phTopic;
+  document.getElementById('assess-objective').placeholder = t.phAssessObj;
+  document.getElementById('align-new-obj').placeholder = t.phAlignObj;
+  document.getElementById('syl-course-name').placeholder = t.phCourseName;
+
+  // Update tab labels
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.textContent = btn.dataset[lang];
+  });
+
+  // Update select options
+  document.querySelectorAll('select option[data-'+lang+']').forEach(opt => {
+    opt.textContent = opt.dataset[lang];
+  });
+
+  renderBloomGrid();
+  renderFinkGrid();
+  buildWeekPlan();
+}
+
+// ===== BLOOM'S GRID =====
+function renderBloomGrid() {
+  const grid = document.getElementById('bloom-grid');
+  const levels = bloomLevels[currentLang];
+  grid.innerHTML = levels.map((level, i) => `
+    <div class="taxonomy-cell bloom-${i+1} tooltip ${selectedBlooms.includes(level.id)?'selected':''}"
+         onclick="toggleBloom('${level.id}')" data-id="${level.id}">
+      <strong>${level.name}</strong><br>
+      <span class="tooltip-text">${level.desc}<br>${level.verbs.slice(0,3).join(', ')}...</span>
+    </div>
+  `).join('');
+}
+
+function toggleBloom(id) {
+  if (selectedBlooms.includes(id)) selectedBlooms = selectedBlooms.filter(x => x !== id);
+  else selectedBlooms.push(id);
+  renderBloomGrid();
+}
+
+// ===== FINK'S GRID =====
+function renderFinkGrid() {
+  const grid = document.getElementById('fink-grid');
+  const cats = finkCategories[currentLang];
+  grid.innerHTML = cats.map((cat, i) => `
+    <div class="fink-cell fink-${i+1} ${selectedFinks.includes(cat.id)?'selected':''}"
+         onclick="toggleFink('${cat.id}')">
+      <strong>${cat.name}</strong><br>
+      <span style="font-size:0.7rem;opacity:0.8;">${cat.desc}</span>
+    </div>
+  `).join('');
+}
+
+function toggleFink(id) {
+  if (selectedFinks.includes(id)) selectedFinks = selectedFinks.filter(x => x !== id);
+  else selectedFinks.push(id);
+  renderFinkGrid();
+}
+
+// ===== OBJECTIVE GENERATION =====
+function generateObjectives() {
+  const subject = document.getElementById('course-subject').value;
+  const topic = document.getElementById('course-topic').value;
+
+  if (selectedBlooms.length === 0) {
+    alert(currentLang === 'ja' ? 'ブルーム・タキソノミーのレベルを1つ以上選択してください。' : 'Please select at least one Bloom\'s level.');
+    return;
+  }
+
+  const levels = bloomLevels[currentLang];
+  generatedObjectives = [];
+
+  selectedBlooms.forEach(bloomId => {
+    const level = levels.find(l => l.id === bloomId);
+    const verb = level.verbs[Math.floor(Math.random() * level.verbs.length)];
+    const topicStr = topic || (currentLang === 'ja' ? '本科目の主要概念' : 'key concepts of this course');
+
+    let objective;
+    if (currentLang === 'ja') {
+      const templates = [
+        `学生は${topicStr}を${verb}ことができる。`,
+        `本科目の修了時に、学生は${topicStr}に関して${verb}ことができる。`,
+        `学生は${topicStr}について${verb}能力を身につける。`
+      ];
+      objective = templates[Math.floor(Math.random() * templates.length)];
+    } else {
+      const templates = [
+        `Students will be able to ${verb} ${topicStr}.`,
+        `By the end of this course, students will ${verb} ${topicStr}.`,
+        `Students will demonstrate the ability to ${verb} ${topicStr}.`
+      ];
+      objective = templates[Math.floor(Math.random() * templates.length)];
+    }
+
+    let finkLabel = '';
+    if (selectedFinks.length > 0) {
+      const finkCat = finkCategories[currentLang].find(f => f.id === selectedFinks[Math.floor(Math.random() * selectedFinks.length)]);
+      finkLabel = finkCat ? finkCat.name : '';
+    }
+
+    generatedObjectives.push({ text: objective, bloom: level.name, bloomId, fink: finkLabel });
+  });
+
+  renderObjectives();
+}
+
+function renderObjectives() {
+  const container = document.getElementById('objectives-output');
+  const card = document.getElementById('objectives-output-card');
+  card.style.display = 'block';
+
+  container.innerHTML = generatedObjectives.map((obj, i) => `
+    <div class="objective-item">
+      <div class="objective-text">${obj.text}</div>
+      <div>
+        <span class="objective-tag bloom-${bloomLevels[currentLang].findIndex(l=>l.id===obj.bloomId)+1}" style="padding:3px 8px;border-radius:12px;font-size:0.7rem;">${obj.bloom}</span>
+        ${obj.fink ? `<span class="objective-tag" style="background:var(--secondary-light);color:var(--secondary);padding:3px 8px;border-radius:12px;font-size:0.7rem;margin-left:4px;">${obj.fink}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearObjectives() {
+  selectedBlooms = [];
+  selectedFinks = [];
+  generatedObjectives = [];
+  document.getElementById('objectives-output-card').style.display = 'none';
+  document.getElementById('course-subject').value = '';
+  document.getElementById('course-topic').value = '';
+  renderBloomGrid();
+  renderFinkGrid();
+}
+
+function copyObjectives() {
+  const text = generatedObjectives.map(o => o.text).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    alert(i18n[currentLang].copied);
+  });
+}
+
+function addToAlignment() {
+  generatedObjectives.forEach(obj => {
+    alignmentRows.push({
+      objective: obj.text,
+      bloom: obj.bloom,
+      fink: obj.fink,
+      activity: '',
+      assessment: ''
+    });
+  });
+  renderAlignmentTable();
+  // Switch to alignment tab
+  document.querySelectorAll('.tab-btn')[3].click();
+}
+
+// ===== SYLLABUS BUILDER =====
+function buildWeekPlan() {
+  const numWeeks = parseInt(document.getElementById('num-weeks').value);
+  const container = document.getElementById('week-plan-container');
+  const t = i18n[currentLang];
+
+  let header = `<div class="week-row" style="font-weight:600;font-size:0.8rem;color:var(--text-muted);border-bottom:2px solid var(--border);">
+    <div style="text-align:center;">#</div>
+    <div>${t.weekTopic}</div>
+    <div>${t.weekActivity}</div>
+    <div>${t.weekAssess}</div>
+  </div>`;
+
+  let rows = '';
+  for (let i = 1; i <= numWeeks; i++) {
+    rows += `<div class="week-row">
+      <div class="week-num">${i}</div>
+      <input type="text" class="week-topic" placeholder="${t.weekTopic} ${i}">
+      <select class="week-activity">
+        <option value="">${currentLang==='ja'?'選択...':'Select...'}</option>
+        <option value="lecture">${currentLang==='ja'?'講義':'Lecture'}</option>
+        <option value="discussion">${currentLang==='ja'?'討論':'Discussion'}</option>
+        <option value="workshop">${currentLang==='ja'?'ワークショップ':'Workshop'}</option>
+        <option value="group">${currentLang==='ja'?'グループワーク':'Group Work'}</option>
+        <option value="presentation">${currentLang==='ja'?'発表':'Presentation'}</option>
+        <option value="fieldwork">${currentLang==='ja'?'フィールドワーク':'Fieldwork'}</option>
+        <option value="lab">${currentLang==='ja'?'実験・実習':'Lab/Practice'}</option>
+        <option value="reflection">${currentLang==='ja'?'振り返り':'Reflection'}</option>
+      </select>
+      <select class="week-assess">
+        <option value="">${currentLang==='ja'?'なし':'None'}</option>
+        <option value="quiz">${currentLang==='ja'?'小テスト':'Quiz'}</option>
+        <option value="report">${currentLang==='ja'?'レポート':'Report'}</option>
+        <option value="peer">${currentLang==='ja'?'ピア評価':'Peer Review'}</option>
+        <option value="portfolio">${currentLang==='ja'?'ポートフォリオ':'Portfolio'}</option>
+        <option value="midterm">${currentLang==='ja'?'中間試験':'Midterm'}</option>
+        <option value="final">${currentLang==='ja'?'期末試験':'Final Exam'}</option>
+        <option value="project">${currentLang==='ja'?'プロジェクト':'Project'}</option>
+      </select>
+    </div>`;
+  }
+  container.innerHTML = header + rows;
+}
+
+function exportSyllabus() {
+  const courseName = document.getElementById('syl-course-name').value || (currentLang==='ja'?'コース名未設定':'Untitled Course');
+  const weeks = document.querySelectorAll('.week-row:not(:first-child)');
+  let text = `${courseName}\n${'='.repeat(40)}\n\n`;
+
+  weeks.forEach((row, i) => {
+    const topic = row.querySelector('.week-topic')?.value || '-';
+    const activity = row.querySelector('.week-activity')?.selectedOptions[0]?.text || '-';
+    const assess = row.querySelector('.week-assess')?.selectedOptions[0]?.text || '-';
+    text += `${currentLang==='ja'?'第':'Week '}${i+1}${currentLang==='ja'?'回':''}: ${topic}\n`;
+    text += `  ${currentLang==='ja'?'活動':'Activity'}: ${activity} | ${currentLang==='ja'?'評価':'Assessment'}: ${assess}\n\n`;
+  });
+
+  navigator.clipboard.writeText(text).then(() => alert(i18n[currentLang].copied));
+}
+
+// ===== RUBRIC GENERATOR =====
+function generateRubric() {
+  const method = document.getElementById('assess-method').value;
+  const bloomLevel = document.getElementById('assess-bloom').value;
+  const template = rubricTemplates[currentLang][method] || rubricTemplates[currentLang].report;
+  const t = i18n[currentLang];
+
+  let html = `<table class="rubric-table">
+    <thead><tr>
+      <th>${t.rubricCriteria}</th>
+      <th>${t.rubricExcellent}</th>
+      <th>${t.rubricGood}</th>
+      <th>${t.rubricAdequate}</th>
+      <th>${t.rubricDeveloping}</th>
+    </tr></thead><tbody>`;
+
+  template.criteria.forEach((criterion, i) => {
+    html += `<tr>
+      <td><strong>${criterion}</strong></td>
+      <td class="rubric-level-4">${template.levels[4][i]}</td>
+      <td class="rubric-level-3">${template.levels[3][i]}</td>
+      <td class="rubric-level-2">${template.levels[2][i]}</td>
+      <td class="rubric-level-1">${template.levels[1][i]}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+
+  document.getElementById('rubric-output').innerHTML = html;
+  document.getElementById('rubric-output-card').style.display = 'block';
+}
+
+function copyRubric() {
+  const table = document.getElementById('rubric-output').querySelector('table');
+  let text = '';
+  table.querySelectorAll('tr').forEach(row => {
+    const cells = Array.from(row.querySelectorAll('th, td')).map(c => c.textContent.trim());
+    text += cells.join('\t') + '\n';
+  });
+  navigator.clipboard.writeText(text).then(() => alert(i18n[currentLang].copied));
+}
+
+// ===== ALIGNMENT MATRIX =====
+function addAlignmentRow() {
+  const obj = document.getElementById('align-new-obj').value.trim();
+  if (!obj) return;
+  alignmentRows.push({ objective: obj, bloom: '', fink: '', activity: '', assessment: '' });
+  document.getElementById('align-new-obj').value = '';
+  renderAlignmentTable();
+}
+
+function renderAlignmentTable() {
+  const tbody = document.getElementById('alignment-tbody');
+  const bloomOpts = bloomLevels[currentLang].map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+  const finkOpts = finkCategories[currentLang].map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+
+  tbody.innerHTML = alignmentRows.map((row, i) => `
+    <tr>
+      <td style="text-align:left;font-size:0.8rem;max-width:200px;">${row.objective}</td>
+      <td><select onchange="alignmentRows[${i}].bloom=this.value" style="font-size:0.75rem;padding:4px;">
+        <option value="">-</option>${bloomOpts}
+      </select></td>
+      <td><select onchange="alignmentRows[${i}].fink=this.value" style="font-size:0.75rem;padding:4px;">
+        <option value="">-</option>${finkOpts}
+      </select></td>
+      <td><input type="text" value="${row.activity}" onchange="alignmentRows[${i}].activity=this.value" style="font-size:0.75rem;padding:4px;" placeholder="${currentLang==='ja'?'活動':'Activity'}"></td>
+      <td><input type="text" value="${row.assessment}" onchange="alignmentRows[${i}].assessment=this.value" style="font-size:0.75rem;padding:4px;" placeholder="${currentLang==='ja'?'評価':'Assessment'}"></td>
+      <td><button class="btn btn-sm btn-outline" onclick="removeAlignRow(${i})">✕</button></td>
+    </tr>
+  `).join('');
+
+  // Set saved values
+  setTimeout(() => {
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach((tr, i) => {
+      const selects = tr.querySelectorAll('select');
+      if (alignmentRows[i].bloom) selects[0].value = alignmentRows[i].bloom;
+      if (alignmentRows[i].fink) selects[1].value = alignmentRows[i].fink;
+    });
+  }, 0);
+}
+
+function removeAlignRow(i) {
+  alignmentRows.splice(i, 1);
+  renderAlignmentTable();
+}
+
+function checkAlignment() {
+  const feedback = document.getElementById('alignment-feedback');
+  feedback.style.display = 'block';
+
+  const incomplete = alignmentRows.filter(r => !r.activity || !r.assessment);
+  if (incomplete.length === 0 && alignmentRows.length > 0) {
+    feedback.innerHTML = `<span style="color:var(--accent);">${i18n[currentLang].alignOk}</span>`;
+  } else if (alignmentRows.length === 0) {
+    feedback.innerHTML = `<span style="color:var(--text-muted);">${currentLang==='ja'?'学習目標を追加してください。':'Please add learning objectives.'}</span>`;
+  } else {
+    feedback.innerHTML = `<span style="color:var(--warning);">${i18n[currentLang].alignWarn}</span>
+    <ul style="margin-top:8px;font-size:0.8rem;padding-left:20px;">
+      ${incomplete.map(r => `<li>${r.objective.substring(0,40)}...</li>`).join('')}
+    </ul>`;
+  }
+}
+
+function exportAlignment() {
+  let text = currentLang==='ja' ? '整合性マトリクス\n' : 'Alignment Matrix\n';
+  text += '='.repeat(40) + '\n\n';
+  const headers = currentLang==='ja'
+    ? ['学習目標','Bloom','Fink','教授活動','評価方法']
+    : ['Objective','Bloom','Fink','Activity','Assessment'];
+  text += headers.join('\t') + '\n';
+  alignmentRows.forEach(r => {
+    text += [r.objective, r.bloom, r.fink, r.activity, r.assessment].join('\t') + '\n';
+  });
+  navigator.clipboard.writeText(text).then(() => alert(i18n[currentLang].copied));
+}
+
+// Initialize
+init();
+</script>
+</body>
+</html>
