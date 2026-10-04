@@ -36,6 +36,10 @@
 - `alignmentRows[]` で状態管理
 - 整合性チェック: 活動・評価が未設定の目標を検出して警告
 
+### 用語集 (`#glossary`)
+- タブ外（全タブ共通・常時表示）の折りたたみカード
+- `glossary[]`（ja/en/dja/den）を `renderGlossary()` で描画、検索フィルタ付き
+
 ## 主要なデータ構造
 ```javascript
 bloomLevels[lang]     // 各レベルの id, name, desc, verbs[]
@@ -51,7 +55,7 @@ i18n[lang]            // 全UIテキストの翻訳キー
 - [ ] CSV/PDFエクスポート機能
 - [ ] ルーブリックテンプレートの追加（ディスカッション、ポートフォリオ、ピア評価等に固有テンプレート）
 - [ ] 学習目標のABCD形式対応（Audience, Behavior, Condition, Degree）
-- [ ] ローカルストレージによるデータ永続化
+- [x] ローカルストレージによるデータ永続化（`saveState()`/`loadState()`、キー `cahe-syllabus-v1`、ヘッダーのリセットボタンで消去）
 - [ ] DP（ディプロマ・ポリシー）との対応マッピング機能
 
 ## 配布
