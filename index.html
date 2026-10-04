@@ -351,6 +351,7 @@ textarea { resize: vertical; min-height: 80px; }
   <div class="lang-toggle">
     <button class="lang-btn active" onclick="setLang('ja')">日本語</button>
     <button class="lang-btn" onclick="setLang('en')">English</button>
+    <button class="lang-btn" onclick="resetSavedData()" id="btn-reset" title="保存データを消去">リセット</button>
   </div>
 </div>
 
@@ -535,6 +536,57 @@ let selectedBlooms = [];
 let selectedFinks = [];
 let generatedObjectives = [];
 let alignmentRows = [];
+let weekData = []; // [{topic, activity, assess}] indexed by week (0-based)
+
+// ===== PERSISTENCE (localStorage) =====
+const STORAGE_KEY = 'cahe-syllabus-v1';
+const PERSIST_FIELDS = ['course-subject','course-topic','num-weeks','syl-course-name','assess-objective','assess-method','assess-bloom'];
+let restoring = false;
+
+function captureWeeks() {
+  document.querySelectorAll('#week-plan-container .week-row').forEach(row => {
+    const num = row.querySelector('.week-num');
+    if (!num) return;
+    const i = parseInt(num.textContent) - 1;
+    weekData[i] = {
+      topic: row.querySelector('.week-topic').value,
+      activity: row.querySelector('.week-activity').value,
+      assess: row.querySelector('.week-assess').value
+    };
+  });
+}
+
+function saveState() {
+  if (restoring) return;
+  captureWeeks();
+  const fields = {};
+  PERSIST_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) fields[id] = el.value; });
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lang: currentLang, fields, weekData, alignmentRows }));
+  } catch (e) { /* storage unavailable (private mode, iframe restrictions) */ }
+}
+
+function loadState() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return; }
+  if (!data) return;
+  restoring = true;
+  Object.entries(data.fields || {}).forEach(([id, v]) => {
+    const el = document.getElementById(id);
+    if (el && v != null) el.value = v;
+  });
+  if (Array.isArray(data.weekData)) weekData = data.weekData;
+  if (Array.isArray(data.alignmentRows)) alignmentRows = data.alignmentRows;
+  if (data.lang === 'en' || data.lang === 'ja') currentLang = data.lang;
+  restoring = false;
+}
+
+function resetSavedData() {
+  if (!confirm(i18n[currentLang].confirmReset)) return;
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  restoring = true;
+  location.reload();
+}
 
 const i18n = {
   ja: {
@@ -580,6 +632,8 @@ const i18n = {
     rubricCriteria: '評価基準', rubricExcellent: '秀（4）', rubricGood: '優（3）', rubricAdequate: '良（2）', rubricDeveloping: '可（1）',
     copied: 'コピーしました！',
     alignOk: '✓ 整合性は概ね確保されています。',
+    btnReset: 'リセット',
+    confirmReset: 'ブラウザに自動保存された入力内容をすべて消去します。よろしいですか？',
     alignWarn: '⚠ 一部の学習目標に対応する評価方法が未設定です。'
   },
   en: {
@@ -625,6 +679,8 @@ const i18n = {
     rubricCriteria: 'Criteria', rubricExcellent: 'Excellent (4)', rubricGood: 'Good (3)', rubricAdequate: 'Adequate (2)', rubricDeveloping: 'Developing (1)',
     copied: 'Copied!',
     alignOk: '✓ Alignment is generally maintained.',
+    btnReset: 'Reset',
+    confirmReset: 'This will erase all input auto-saved in this browser. Continue?',
     alignWarn: '⚠ Some learning objectives lack corresponding assessment methods.'
   }
 };
@@ -736,10 +792,13 @@ const rubricTemplates = {
 
 // ===== INITIALIZATION =====
 function init() {
-  renderBloomGrid();
-  renderFinkGrid();
-  buildWeekPlan();
+  loadState();
   setupTabs();
+  if (currentLang !== 'ja') setLang(currentLang);
+  else { renderBloomGrid(); renderFinkGrid(); buildWeekPlan(); }
+  renderAlignmentTable();
+  document.addEventListener('input', saveState);
+  document.addEventListener('change', saveState);
 }
 
 function setupTabs() {
@@ -784,6 +843,7 @@ function setLang(lang) {
   document.getElementById('btn-export-align').textContent = t.btnExportAlign;
   document.getElementById('btn-check-align').textContent = t.btnCheckAlign;
   document.getElementById('btn-export-syl').textContent = t.btnExportSyl;
+  document.getElementById('btn-reset').textContent = t.btnReset;
   document.getElementById('th-obj').textContent = t.thObj;
   document.getElementById('th-bloom').textContent = t.thBloom;
   document.getElementById('th-fink').textContent = t.thFink;
@@ -809,6 +869,8 @@ function setLang(lang) {
   renderBloomGrid();
   renderFinkGrid();
   buildWeekPlan();
+  renderAlignmentTable();
+  saveState();
 }
 
 // ===== BLOOM'S GRID =====
@@ -950,6 +1012,7 @@ function buildWeekPlan() {
   const numWeeks = parseInt(document.getElementById('num-weeks').value);
   const container = document.getElementById('week-plan-container');
   const t = i18n[currentLang];
+  captureWeeks();
 
   let header = `<div class="week-row" style="font-weight:600;font-size:0.8rem;color:var(--text-muted);border-bottom:2px solid var(--border);">
     <div style="text-align:center;">#</div>
@@ -987,6 +1050,15 @@ function buildWeekPlan() {
     </div>`;
   }
   container.innerHTML = header + rows;
+  container.querySelectorAll('.week-row').forEach(row => {
+    const num = row.querySelector('.week-num');
+    const d = num && weekData[parseInt(num.textContent) - 1];
+    if (!d) return;
+    row.querySelector('.week-topic').value = d.topic || '';
+    row.querySelector('.week-activity').value = d.activity || '';
+    row.querySelector('.week-assess').value = d.assess || '';
+  });
+  saveState();
 }
 
 function exportSyllabus() {
@@ -1085,6 +1157,7 @@ function renderAlignmentTable() {
       if (alignmentRows[i].fink) selects[1].value = alignmentRows[i].fink;
     });
   }, 0);
+  saveState();
 }
 
 function removeAlignRow(i) {
