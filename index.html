@@ -325,6 +325,13 @@ textarea { resize: vertical; min-height: 80px; }
 }
 
 /* Info box */
+.glossary summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; color: var(--primary); }
+.glossary input[type=search] { width: 100%; margin: 12px 0; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; }
+.glossary dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+.glossary dl > div { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.glossary dt { font-weight: 600; font-size: 0.9rem; }
+.glossary dt small { font-weight: 400; color: var(--text-muted); margin-left: 6px; }
+.glossary dd { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
 .info-box {
   background: var(--primary-light);
   border-left: 3px solid var(--primary);
@@ -527,6 +534,13 @@ textarea { resize: vertical; min-height: 80px; }
   </div>
 </div>
 
+<!-- GLOSSARY (outside tab panels, always visible) -->
+<details class="card glossary" id="glossary">
+  <summary id="glossary-title">用語集</summary>
+  <input type="search" id="glossary-search" placeholder="用語を検索" oninput="renderGlossary()">
+  <dl id="glossary-list"></dl>
+</details>
+
 </div>
 
 <script>
@@ -633,6 +647,8 @@ const i18n = {
     copied: 'コピーしました！',
     alignOk: '✓ 整合性は概ね確保されています。',
     btnReset: 'リセット',
+    glossaryTitle: '用語集',
+    phGlossary: '用語を検索',
     confirmReset: 'ブラウザに自動保存された入力内容をすべて消去します。よろしいですか？',
     alignWarn: '⚠ 一部の学習目標に対応する評価方法が未設定です。'
   },
@@ -680,6 +696,8 @@ const i18n = {
     copied: 'Copied!',
     alignOk: '✓ Alignment is generally maintained.',
     btnReset: 'Reset',
+    glossaryTitle: 'Glossary',
+    phGlossary: 'Search terms',
     confirmReset: 'This will erase all input auto-saved in this browser. Continue?',
     alignWarn: '⚠ Some learning objectives lack corresponding assessment methods.'
   }
@@ -790,6 +808,80 @@ const rubricTemplates = {
   rubricTemplates.en[method] = rubricTemplates.en.report;
 });
 
+// ===== GLOSSARY =====
+const glossary = [
+  { ja:'改訂版ブルーム・タキソノミー', en:"Revised Bloom's Taxonomy",
+    dja:'Anderson & Krathwohl (2001) による教育目標の分類。認知プロセス次元（記憶・理解・応用・分析・評価・創造）と知識次元の2軸で学習目標を整理する。',
+    den:'Anderson & Krathwohl (2001) framework classifying learning objectives on two axes: the cognitive process dimension (Remember to Create) and the knowledge dimension.' },
+  { ja:'認知プロセス次元', en:'Cognitive Process Dimension',
+    dja:'記憶→理解→応用→分析→評価→創造の6段階。右に行くほど高次の思考を要する。',
+    den:'Six levels from Remember through Understand, Apply, Analyze, Evaluate to Create, increasing in cognitive complexity.' },
+  { ja:'知識次元', en:'Knowledge Dimension',
+    dja:'事実的知識・概念的知識・手続き的知識・メタ認知的知識の4種類。何を学ぶかを表す。',
+    den:'Four types of knowledge — factual, conceptual, procedural and metacognitive — describing what is learned.' },
+  { ja:'Finkの重要な学習の分類', en:"Fink's Taxonomy of Significant Learning",
+    dja:'Fink (2003) による非階層的な6カテゴリ（基礎的知識・応用・統合・人間の次元・関心・学び方の学習）。認知面に加え、情意面や自己調整を含む。',
+    den:'Fink (2003): six interactive, non-hierarchical categories — Foundational Knowledge, Application, Integration, Human Dimension, Caring, Learning How to Learn.' },
+  { ja:'人間の次元', en:'Human Dimension',
+    dja:'Finkのカテゴリの一つ。自己や他者について学ぶこと（自己理解・他者との協働・社会的影響の認識）。',
+    den:'A Fink category: learning about oneself and others — self-understanding, collaboration, and social impact.' },
+  { ja:'学び方の学習', en:'Learning How to Learn',
+    dja:'Finkのカテゴリの一つ。自律的な学習者となるための方法・探究の仕方を身につけること。',
+    den:'A Fink category: becoming a self-directed learner and knowing how to inquire and construct knowledge.' },
+  { ja:'建設的整合性', en:'Constructive Alignment',
+    dja:'Biggs (2003) が提唱。学習目標・教授学習活動・評価方法を一貫させる授業設計の原則。本ツールの整合性マトリクスの基盤。',
+    den:'Biggs (2003): designing courses so that intended learning outcomes, teaching/learning activities and assessment are mutually consistent.' },
+  { ja:'学習目標（学修成果）', en:'Learning Objective / Outcome',
+    dja:'授業終了時に学生が「何ができるようになるか」を、観察・測定可能な行為動詞で記述したもの。',
+    den:'A statement of what students will be able to do by the end of a course, written with observable, measurable action verbs.' },
+  { ja:'行為動詞', en:'Action Verb',
+    dja:'「説明する」「比較する」「設計する」など観察可能な行動を表す動詞。「理解する」「知る」は測定しにくいため避けるのが望ましい。',
+    den:'Verbs describing observable behavior (explain, compare, design). Vague verbs like "understand" or "know" are hard to assess.' },
+  { ja:'ABCD形式', en:'ABCD Format',
+    dja:'学習目標を Audience（誰が）・Behavior（何を）・Condition（どんな条件で）・Degree（どの程度）の4要素で記述する方法。',
+    den:'Writing objectives with Audience, Behavior, Condition and Degree.' },
+  { ja:'ルーブリック', en:'Rubric',
+    dja:'評価観点（行）と達成水準（列）の表に、各水準の具体的な記述を示した評価基準表。採点の一貫性と学生へのフィードバックに役立つ。',
+    den:'A scoring guide listing criteria (rows) and performance levels (columns) with descriptors for each, supporting consistent grading and feedback.' },
+  { ja:'形成的評価', en:'Formative Assessment',
+    dja:'学習の途中で行い、改善のためのフィードバックを与える評価（小テスト、振り返り、ピア評価など）。',
+    den:'Assessment during learning that provides feedback for improvement (quizzes, reflections, peer review).' },
+  { ja:'総括的評価', en:'Summative Assessment',
+    dja:'単元や科目の終わりに、到達度を判定するために行う評価（期末試験、最終レポートなど）。',
+    den:'Assessment at the end of a unit or course to judge attainment (final exam, final report).' },
+  { ja:'アクティブラーニング', en:'Active Learning',
+    dja:'討論・グループワーク・発表など、学生が能動的に参加する教授学習法の総称。',
+    den:'Teaching approaches in which students actively participate — discussion, group work, presentations, etc.' },
+  { ja:'ディプロマ・ポリシー（DP）', en:'Diploma Policy (DP)',
+    dja:'卒業認定・学位授与の方針。学生が卒業時に身につけているべき資質・能力を示し、各科目の学習目標はこれと対応づけられる。',
+    den:'A university\'s degree-award policy stating the competencies graduates should attain; course objectives are mapped to it.' },
+  { ja:'カリキュラム・マップ', en:'Curriculum Map',
+    dja:'各科目がディプロマ・ポリシーのどの能力の育成に寄与するかを一覧にした表。',
+    den:'A table showing which diploma-policy competencies each course contributes to.' }
+];
+
+function renderGlossary() {
+  const q = (document.getElementById('glossary-search').value || '').toLowerCase();
+  const list = document.getElementById('glossary-list');
+  list.innerHTML = '';
+  glossary.forEach(g => {
+    const main = currentLang === 'ja' ? g.ja : g.en;
+    const sub = currentLang === 'ja' ? g.en : g.ja;
+    const desc = currentLang === 'ja' ? g.dja : g.den;
+    if (q && ![g.ja, g.en, g.dja, g.den].some(x => x.toLowerCase().includes(q))) return;
+    const wrap = document.createElement('div');
+    const dt = document.createElement('dt');
+    dt.textContent = main;
+    const small = document.createElement('small');
+    small.textContent = sub;
+    dt.appendChild(small);
+    const dd = document.createElement('dd');
+    dd.textContent = desc;
+    wrap.append(dt, dd);
+    list.appendChild(wrap);
+  });
+}
+
 // ===== INITIALIZATION =====
 function init() {
   loadState();
@@ -797,6 +889,7 @@ function init() {
   if (currentLang !== 'ja') setLang(currentLang);
   else { renderBloomGrid(); renderFinkGrid(); buildWeekPlan(); }
   renderAlignmentTable();
+  renderGlossary();
   document.addEventListener('input', saveState);
   document.addEventListener('change', saveState);
 }
@@ -844,6 +937,9 @@ function setLang(lang) {
   document.getElementById('btn-check-align').textContent = t.btnCheckAlign;
   document.getElementById('btn-export-syl').textContent = t.btnExportSyl;
   document.getElementById('btn-reset').textContent = t.btnReset;
+  document.getElementById('glossary-title').textContent = t.glossaryTitle;
+  document.getElementById('glossary-search').placeholder = t.phGlossary;
+  renderGlossary();
   document.getElementById('th-obj').textContent = t.thObj;
   document.getElementById('th-bloom').textContent = t.thBloom;
   document.getElementById('th-fink').textContent = t.thFink;

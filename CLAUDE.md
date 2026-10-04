@@ -36,6 +36,10 @@
 - `alignmentRows[]` で状態管理
 - 整合性チェック: 活動・評価が未設定の目標を検出して警告
 
+### 用語集 (`#glossary`)
+- タブ外（全タブ共通・常時表示）の折りたたみカード
+- `glossary[]`（ja/en/dja/den）を `renderGlossary()` で描画、検索フィルタ付き
+
 ## 主要なデータ構造
 ```javascript
 bloomLevels[lang]     // 各レベルの id, name, desc, verbs[]
